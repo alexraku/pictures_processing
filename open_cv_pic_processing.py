@@ -82,7 +82,7 @@ def resize_files(file_paths_list: list, desired_width: int = 1024) -> None:
     """
     _, number_of_files_to_resize = get_total_size_of_all_files(file_paths_list)
     answer = input(f"WARNING!!! All {number_of_files_to_resize} files will "
-                   f"overwritten. Are you sure? (yes/no)")
+                   f"overwritten. Are you sure? (yes/no)\n")
     if answer.lower() == "yes":
         for file_path, _ in file_paths_list:
             img = cv2.imread(file_path)
@@ -92,7 +92,7 @@ def resize_files(file_paths_list: list, desired_width: int = 1024) -> None:
             resized_img = cv2.resize(img, new_size, interpolation=cv2.INTER_AREA)
             cv2.imwrite(file_path, resized_img)
     else:
-        print("Resizing aborted")
+        print("Resizing is aborted")
 
 
 def encode_files(file_paths_list: list, quality: int = 70) -> None:
@@ -103,20 +103,25 @@ def encode_files(file_paths_list: list, quality: int = 70) -> None:
     :return: None
     TODO: добавить защиту, запрос уверен или нет в перезаписи файлов.
     """
-
-    for file_path, _ in file_paths_list:
-        img = cv2.imread(file_path)
-        if img is not None:
-            encode_param = [cv2.IMWRITE_JPEG_QUALITY, quality]
-            result, imgencode = cv2.imencode(".jpg", img, encode_param)
-            if result:
-                with open(file_path, "wb") as f:
-                    f.write(imgencode)
+    answer = input("WARNING!!! All files will overwritten. Are you sure? "
+                   "(yes/no)\n")
+    if answer.lower() == 'yes':
+        for file_path, _ in file_paths_list:
+            img = cv2.imread(file_path)
+            if img is not None:
+                encode_param = [cv2.IMWRITE_JPEG_QUALITY, quality]
+                result, imgencode = cv2.imencode(".jpg", img, encode_param)
+                if result:
+                    with open(file_path, "wb") as f:
+                        f.write(imgencode)
+    else:
+        print("Encoding is aborted")
 
 
 if __name__ == "__main__":
     print("start resizing")
     files_list = get_pictures_more_x_pix(r"test", 1024)
+    resize_files(files_list)
     print(files_list)
     files_list = get_files_more_x_kb(r"test", 20)
     print(files_list)
