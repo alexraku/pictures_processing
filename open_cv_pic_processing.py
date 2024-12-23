@@ -101,7 +101,6 @@ def encode_files(file_paths_list: list, quality: int = 70) -> None:
     :param file_paths_list: list[tuple[str, int]]
     :param quality: int
     :return: None
-    TODO: добавить защиту, запрос уверен или нет в перезаписи файлов.
     """
     answer = input("WARNING!!! All files will overwritten. Are you sure? "
                    "(yes/no)\n")
