@@ -26,13 +26,13 @@ def get_pictures_more_x_pix(dir_path: str, x_pix: int = 1024) -> list:
                 file_path = path.join(root, file_name)
                 picture_candidate = cv2.imread(file_path)
                 if (picture_candidate is not None and
-                        picture_candidate.shape[0] > x_pix):
+                        picture_candidate.shape[1] > x_pix):
                     pic_paths_for_resize.append(
                         (path.abspath(file_path), os.path.getsize(file_path)))
     return pic_paths_for_resize
 
 
-def get_files_more_x_KB(dir_path: str, file_size_limit=200):
+def get_files_more_x_kb(dir_path: str, file_size_limit=200):
     """
     Рекурсивно обходит все вложенные папки в dir_path, проверяет размер файла
     для файлов с расширениями перечисленными в PICTURES_EXTENSIONS. Если размер
@@ -57,26 +57,53 @@ def get_files_more_x_KB(dir_path: str, file_size_limit=200):
     return file_candidates_list
 
 
-def get_size_of_files_for_resize(files_list: list) -> tuple:
+def get_total_size_of_all_files(files_list: list) -> tuple:
+    """
+    Возвращает общий размер всех файлов в списке в мегабайтах и их количество.
+    :param files_list: list[tuple[str, int]]
+    :return: tuple[int, int]
+    """
     t_size = 0
-    # print(files_list)
     for _, size in files_list:
         t_size += size
     t_size /= 1024 * 1024
-    return (t_size, len(files_list))
+    return t_size, len(files_list)
 
 
 def resize_files(file_paths_list: list, desired_width: int = 1024) -> None:
-    for file_path, _ in file_paths_list:
-        img = cv2.imread(file_path)
-        aspect_ratio = img.shape[1] / img.shape[0]  # width/height
-        desired_height = int(desired_width / aspect_ratio)
-        new_size = (desired_width, desired_height)
-        resized_img = cv2.resize(img, new_size, interpolation=cv2.INTER_AREA)
-        cv2.imwrite(file_path, resized_img)
+    """
+    Изменяет размер холста изображения до desired_width, высоту изменяет
+    пропорционально (сохраняет пропорции). ВНИМАНИЕ, изменяет изображение на
+    месте (перезаписывает исходники).
+
+    :param file_paths_list: list[tuple[str, int]]
+    :param desired_width: int
+    :return: None
+    """
+    _, number_of_files_to_resize = get_total_size_of_all_files(file_paths_list)
+    answer = input(f"WARNING!!! All {number_of_files_to_resize} files will "
+                   f"overwritten. Are you sure? (yes/no)")
+    if answer.lower() == "yes":
+        for file_path, _ in file_paths_list:
+            img = cv2.imread(file_path)
+            aspect_ratio = img.shape[1] / img.shape[0]  # width/height
+            desired_height = int(desired_width / aspect_ratio)
+            new_size = (desired_width, desired_height)
+            resized_img = cv2.resize(img, new_size, interpolation=cv2.INTER_AREA)
+            cv2.imwrite(file_path, resized_img)
+    else:
+        print("Resizing aborted")
 
 
 def encode_files(file_paths_list: list, quality: int = 70) -> None:
+    """
+    Сжимает файлы с качеством quality. ВНИМАНИЕ, перезаписывает исходники.
+    :param file_paths_list: list[tuple[str, int]]
+    :param quality: int
+    :return: None
+    TODO: добавить защиту, запрос уверен или нет в перезаписи файлов.
+    """
+
     for file_path, _ in file_paths_list:
         img = cv2.imread(file_path)
         if img is not None:
@@ -91,7 +118,7 @@ if __name__ == "__main__":
     print("start resizing")
     files_list = get_pictures_more_x_pix(r"test", 1024)
     print(files_list)
-    files_list = get_files_more_x_KB(r"test", 20)
+    files_list = get_files_more_x_kb(r"test", 20)
     print(files_list)
 
     # resize_files(files_list)
