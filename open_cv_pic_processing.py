@@ -2,32 +2,56 @@ import os
 from os import path, walk
 import cv2
 
+# В этом кортеже перечислены все расширения файлов которые нужно считать
+# изображениями.
+PICTURES_EXTENSIONS = (".jpeg", ".jpg", ".png", ".webp")
 
-def get_jpg_files_more_x_pix(dir_path: str, x: int = 1024) -> list:
-    jpg_paths_for_resize = []
+
+def get_pictures_more_x_pix(dir_path: str, x_pix: int = 1024) -> list:
+    """
+    Рекурсивно обходит все вложенные папки в dir_path, проверяет размер в
+    пикселях для файлов с расширениями перечисленными в PICTURES_EXTENSIONS.
+    Если у файла размер по оси x больше чем x_pix, то добавляем такой файл в
+    список pic_paths_for_resize в виде кортежа, содержащего первым элементом
+    абсолютный путь к файлу, а вторым элементом, размер файла в байтах.
+
+    :param dir_path: str
+    :param x_pix: int
+    :return: list[tuple[str, int]]
+    """
+    pic_paths_for_resize = []
     for root, dirs, files in walk(dir_path):
-        for file in files:
-            if file.endswith('.jpg') or file.endswith(
-                    '.jpeg') or file.endswith('.png'):
-                file_path = path.join(root, file)
-                jpg_file_candidate = cv2.imread(file_path)
-                if jpg_file_candidate is not None and jpg_file_candidate.shape[
-                    0] > x:
-                    jpg_paths_for_resize.append(
+        for file_name in files:
+            if file_name.endswith(PICTURES_EXTENSIONS):
+                file_path = path.join(root, file_name)
+                picture_candidate = cv2.imread(file_path)
+                if (picture_candidate is not None and
+                        picture_candidate.shape[0] > x_pix):
+                    pic_paths_for_resize.append(
                         (path.abspath(file_path), os.path.getsize(file_path)))
-    return jpg_paths_for_resize
+    return pic_paths_for_resize
 
 
-def get_files_more_x_KB(dir_path: str, x=200):
+def get_files_more_x_KB(dir_path: str, file_size_limit=200):
+    """
+    Рекурсивно обходит все вложенные папки в dir_path, проверяет размер файла
+    для файлов с расширениями перечисленными в PICTURES_EXTENSIONS. Если размер
+    больше чем file_size_limit, задается в килобайтах, то добавляем такой файл
+    в список file_candidates_list в виде кортежа, содержащего первым элементом
+    абсолютный путь к файлу, а вторым элементом, размер файла в байтах.
+    
+    :param dir_path: str
+    :param file_size_limit: int
+    :return: list[tuple[str, int]]
+    """
+
     file_candidates_list = []
-    # print(dir_path)
     for root, dirs, files in walk(dir_path):
         for file in files:
-            if file.endswith('.jpg') or file.endswith(
-                    '.jpeg') or file.endswith('.png'):
+            if file.endswith(PICTURES_EXTENSIONS):
                 file_path = path.join(root, file)
                 file_size = os.path.getsize(file_path)
-                if file_size > x * 1024:
+                if file_size > file_size_limit * 1024:
                     file_candidates_list.append(
                         (path.abspath(file_path), file_size))
     return file_candidates_list
@@ -64,11 +88,14 @@ def encode_files(file_paths_list: list, quality: int = 70) -> None:
 
 
 if __name__ == "__main__":
-    # print("start resizing")
-    # files_list = get_jpg_files_more_1024pix(r"W:\goods_photos")
-    # print(get_size_of_files_for_resize(files_list))
+    print("start resizing")
+    files_list = get_pictures_more_x_pix(r"test", 1024)
+    print(files_list)
+    files_list = get_files_more_x_KB(r"test", 20)
+    print(files_list)
+
     # resize_files(files_list)
-    print("start encoding")
-    files_list = get_files_more_x_KB(r"W:\goods_photos")
-    encode_files(files_list)
+    # print("start encoding")
+    # files_list = get_files_more_x_KB(r"W:\goods_photos")
+    # encode_files(files_list)
 
